@@ -1,9 +1,26 @@
+mod numeric_all_ascii;
 mod space_all_ascii;
 mod space_has_non_ascii;
-mod numeric_all_ascii;
 
+use std::io::Bytes;
+
+use numeric_all_ascii::*;
 use space_all_ascii::*;
 use space_has_non_ascii::*;
+
+use crate::numeric;
+
+macro_rules! fetch_and_continue {
+    ($input:expr, $input_len:expr,$index:ident, $byte:ident) => {
+        if $index < $input_len {
+            $byte = $input[$index];
+            $index += 1;
+            continue;
+        } else {
+            break;
+        }
+    };
+}
 
 const SPACE_BYTE: u8 = 0x20; // ASCII value for space character
 
@@ -59,17 +76,149 @@ pub fn compress(input: &[u8], out: &mut Vec<u8>) {
         encode_spaces_mode_non_ascii
     };
 
+    let mut numeric_mode = false;
+    let mut decimal_cnt: u8 = 0;
+    let mut numeric_val: u64 = 0;
+    let mut numeric_sign = Sign::Positive;
+
     let mut current_space_count: usize = 0;
-    for &byte in input {
-        if byte == SPACE_BYTE {
-            // Accumulate consecutive space count
+    let input_len = input.len();
+    let mut index = 0;
+
+    let mut byte = input[index];
+    index += 1;
+
+    loop {
+        // space
+        if byte == b' ' {
+            // space
             current_space_count += 1;
-            continue;
+            fetch_and_continue!(input, input_len, index, byte);
         }
 
         if current_space_count > 0 {
             // encode the accumulated space count.
             space_encoder_fn(&mut current_space_count, out);
+        }
+
+        // numeris
+        if byte == b'-' {
+            if index >= input_len {
+                out.push(b'-');
+                break;
+            }
+            // enter numeric mode
+            let byte = input[index];
+            index += 1;
+            if !byte.is_ascii_digit() {
+                out.push(b'-');
+                continue;
+            }
+
+            numeric_sign = Sign::Negative;
+        } else if !byte.is_ascii_digit() {
+            out.push(byte);
+
+            fetch_and_continue!(input, input_len, index, byte);
+        }
+
+        // numeric
+
+        if byte == b'0' {
+            // must be 0.x
+
+            if index + 2 > input_len {
+                // not numeric
+                if numeric_sign == Sign::Negative {
+                    numeric_sign = Sign::Positive;
+                    out.push(b'-');
+                }
+                out.push(b'0');
+
+                fetch_and_continue!(input, input_len, index, byte);
+            }
+
+            byte = input[index];
+            index += 1;
+            if byte != b'.' {
+                // not number
+                if numeric_sign == Sign::Negative {
+                    numeric_sign = Sign::Positive;
+                    out.push(b'-');
+                }
+                out.push(b'0');
+                continue;
+            }
+
+            // 0.
+            byte = input[index];
+            index += 1;
+            if byte.is_ascii_digit() {
+                // not number
+                if numeric_sign == Sign::Negative {
+                    numeric_sign = Sign::Positive;
+                    out.push(b'-');
+                }
+                out.push(b'0');
+                out.push(b'.');
+                continue;
+            }
+
+            numeric_mode = true;
+            decimal_cnt = 1;
+            numeric_val = (byte - b'0') as u64;
+        } else {
+            // not zero
+            numeric_mode = true;
+            numeric_val = (byte - b'0') as u64;
+        }
+
+        // while cur < input_len {
+        //     let b = index[cur];
+        //     match b {
+        //         b'0' => {
+        //         }
+        //     }
+        // }
+
+        if decimal_cnt == 0 {
+            // integer mode
+            // TODO integer mode
+        }
+
+        // decimal mode
+        let mut need_fetch = true;
+        while index < input_len {
+            let byte = input[index];
+            index += 1;
+            if !byte.is_ascii_digit() {
+                // end numeric encode number
+                compress_numeric_in_all_ascii(numeric_val, decimal_cnt, numeric_sign, out);
+                need_fetch = false;
+                break;
+            }
+
+            decimal_cnt += 1;
+            numeric_val = (numeric_val * 10) + (byte - b'0') as u64;
+
+            if decimal_cnt >= 15 || numeric_val >= 999_999_999_999_999 {
+                compress_numeric_in_all_ascii(numeric_val, decimal_cnt, numeric_sign, out);
+                break;
+            }
+        }
+
+        if need_fetch {
+            fetch_and_continue!(input, input_len, index, byte);
+        } else {
+            continue;
+        }
+    }
+
+    for &byte in input {
+        if byte == SPACE_BYTE {
+            // Accumulate consecutive space count
+            current_space_count += 1;
+            continue;
         }
 
         // Add the non-space character to the output

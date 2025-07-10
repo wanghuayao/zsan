@@ -12,9 +12,8 @@ const SPACE_COUNT_FLAG_ALL_ASCII: u8 = 0b_1100_0000; // 192
 ///
 /// Example: If `count` is 300, `out` will receive `(127 | 0b_1000_0000), (127 | 0b_1000_0000), (46 | 0b_1000_0000)`.
 pub(super) fn encode_spaces_mode_all_ascii(count: &mut usize, out: &mut Vec<u8>) {
-
     let current_out_len = out.len();
- 
+
     // encode the rest
     let num_full_chunks = *count / MAX_COUNT_PER_BYTE as usize;
     let remainder_count = *count % MAX_COUNT_PER_BYTE as usize;
@@ -34,10 +33,10 @@ pub(super) fn encode_spaces_mode_all_ascii(count: &mut usize, out: &mut Vec<u8>)
 /// It interprets bytes with MSB=0 as regular characters and bytes with MSB=1 as space counts.
 #[inline]
 pub(super) fn decode_spaces_in_all_ascii(input: u8, out: &mut Vec<u8>) {
-            // MSB is 11, it's a space count byte
-            // there is a space
-            let space_count = input & SPACE_OUNT_MASK;
-            out.resize(space_count as usize + out.len(), SPACE_BYTE);
+    // MSB is 11, it's a space count byte
+    // there is a space
+    let space_count = input & SPACE_OUNT_MASK;
+    out.resize(space_count as usize + out.len(), SPACE_BYTE);
 }
 
 #[inline]
@@ -45,9 +44,7 @@ pub(super) fn is_space_char(input: u8) -> bool {
     (input & SPACE_COUNT_FLAG_ALL_ASCII) == SPACE_COUNT_FLAG_ALL_ASCII
 }
 
-
 mod test {
-    
 
     #[test]
     fn test_encode_spaces_mode_all_ascii() {

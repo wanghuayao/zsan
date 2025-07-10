@@ -1,6 +1,3 @@
-
-
-
 /// Maximum space count that can be represented by a single byte in `HEADER_MODE_NON_ASCII`.
 const SIMPLE_COMPRESS_MAX_SPACE_COUNT: u8 = u8::MAX; // 255
 
