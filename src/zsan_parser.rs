@@ -11,7 +11,7 @@ pub(crate) enum Block {
     Space(usize, usize),
 }
 
-const MAX_DECIMAL_PLACES: usize = 15;
+const MAX_DECIMAL_PLACES: usize = 0b_0000_1111;
 
 pub fn retrave_blocks(src: &[u8]) -> (bool, bool, Vec<Block>) {
     let mut has_negative = false;
@@ -38,8 +38,6 @@ pub fn retrave_blocks(src: &[u8]) -> (bool, bool, Vec<Block>) {
     }
 
     while idx < n {
-        println!("idx: {},{:?}", idx, out);
-
         idx = flush_space!(idx);
         if idx >= n {
             break;
@@ -78,7 +76,10 @@ pub fn retrave_blocks(src: &[u8]) -> (bool, bool, Vec<Block>) {
             let mut tmp = base; // 备份，方便回滚
             idx += 1;
             let mut frac_idx = idx;
-            while frac_idx < n && s[frac_idx].is_ascii_digit() {
+
+            let max_index = n.min(frac_idx + MAX_DECIMAL_PLACES);
+
+            while frac_idx < max_index && s[frac_idx].is_ascii_digit() {
                 let d = (s[frac_idx] - b'0') as u64;
                 match tmp.checked_mul(10).and_then(|v| v.checked_add(d)) {
                     Some(v) if v <= MAX => {
@@ -161,18 +162,18 @@ mod tests {
             vec![
                 Block::Numerical(
                     0,
-                    19,
+                    18,
                     NumericalBlock {
-                        base: 999_999_999_999_999_999,
+                        base: 99_999_999_999_999_999,
                         negative: false,
-                        decimal_places: 16
+                        decimal_places: 15
                     }
                 ),
                 Block::Numerical(
-                    19,
-                    2,
+                    18,
+                    3,
                     NumericalBlock {
-                        base: 88,
+                        base: 988,
                         negative: false,
                         decimal_places: 0
                     }

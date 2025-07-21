@@ -53,10 +53,6 @@ pub fn encode(input: u64, bits_count_of_fist_byte: u8) -> Vec<u8> {
 /// 变长编码
 #[inline]
 pub fn decode(input: &[u8], bits_count_of_fist_byte: u8) -> (u64, usize) {
-    // input.iter().for_each(|x| {
-    //     println!("input: {:08b}", x);
-    // });
-
     let mut result = 0;
     let mut bits_cnt = 0;
     let mut index: usize = 0;

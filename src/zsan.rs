@@ -36,16 +36,16 @@ pub fn compress(src: &str, out: &mut Vec<u8>) {
     };
 
     out.push(first_byte);
-    let mut last_index = 0;
+    let mut processed_len = 0;
     blocks.into_iter().for_each(|block| {
-        let len = match block {
+        match block {
             Block::Space(start, size) => {
-                println!("space: {start:?}, size: {size:?}");
-                if start > last_index {
-                    out.extend_from_slice(&src[last_index..start]);
+                if start > processed_len {
+                    out.extend_from_slice(&src[processed_len..start]);
+                    processed_len += start - processed_len;
                 }
                 crate::all_ascii::space::compress_space(size, out);
-                size
+                processed_len += size;
             }
             Block::Numerical(
                 start,
@@ -56,18 +56,21 @@ pub fn compress(src: &str, out: &mut Vec<u8>) {
                     decimal_places,
                 },
             ) => {
-                if start > last_index {
-                    out.extend_from_slice(&src[last_index..start]);
+                if start > processed_len {
+                    out.extend_from_slice(&src[processed_len..start]);
+                    processed_len += start - processed_len;
                 }
-                numerical_compressor(base, negative, decimal_places as u8, out);
-                size
+                if !numerical_compressor(base, negative, decimal_places as u8, out) {
+                    out.extend_from_slice(&src[processed_len..processed_len + size]);
+                }
+
+                processed_len += size;
             }
         };
-        last_index += len
     });
 
-    if last_index < src.len() {
-        out.extend_from_slice(&src[last_index + 1..]);
+    if processed_len < src.len() {
+        out.extend_from_slice(&src[processed_len..]);
     }
 }
 
@@ -94,11 +97,11 @@ pub fn decompress(input: &[u8], out: &mut Vec<u8>) {
         if b < 0b_0111_1111 {
             out.push(b);
             index += 1;
-        } else if b & crate::all_ascii::SPACE_HOLDER_FLAG != 0 {
-            crate::all_ascii::space::decompress_space(b, out);
+        } else if crate::all_ascii::is_space(b) {
+            let _ = crate::all_ascii::space::decompress_space(b, out);
             index += 1;
-        } else if b & crate::all_ascii::NUMERICAL_HOLDER_FLAG != 0 {
-            index += numerical_decompressor(input, out);
+        } else if crate::all_ascii::is_numerical(b) {
+            index += numerical_decompressor(&input[index..], out);
         }
     }
 }
@@ -121,6 +124,62 @@ mod tests {
             println!("out\t{:08b}", o);
         }
 
+        assert_eq!(String::from_utf8(final_out).unwrap(), input);
+    }
+
+    #[test]
+    fn test_integer_compression() {
+        let input = "A   123  B";
+        let mut out = Vec::new();
+        super::compress(input, &mut out);
+        for o in out.iter() {
+            println!("{:08b}", o);
+        }
+
+        let mut final_out = vec![];
+        super::decompress(&out, &mut final_out);
+
+        assert_eq!(String::from_utf8(final_out).unwrap(), input);
+    }
+
+    #[test]
+    fn test_unsigned_integer_compression() {
+        let input = "A   123  B-1234";
+        let mut out = Vec::new();
+        super::compress(input, &mut out);
+        for o in out.iter() {
+            println!("{:08b}", o);
+        }
+
+        let mut final_out = vec![];
+        super::decompress(&out, &mut final_out);
+
+        assert_eq!(String::from_utf8(final_out).unwrap(), input);
+    }
+
+    #[test]
+    fn test_decimal_compression() {
+        let input = "A   -1.23  B0.1-234";
+        let mut out = Vec::new();
+        super::compress(input, &mut out);
+        for o in out.iter() {
+            println!("{:08b}", o);
+        }
+        let mut final_out = vec![];
+        super::decompress(&out, &mut final_out);
+        assert_eq!(String::from_utf8(final_out).unwrap(), input);
+    }
+
+    #[test]
+    fn test_unsigned_decimal_compression() {
+        let input = "A   123  B0.1234";
+        let mut out = Vec::new();
+        super::compress(input, &mut out);
+        for o in out.iter() {
+            println!("{:08b}", o);
+        }
+        let mut final_out = vec![];
+        super::decompress(&out, &mut final_out);
         assert_eq!(String::from_utf8(final_out).unwrap(), input);
     }
 }

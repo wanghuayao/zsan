@@ -37,7 +37,10 @@ pub fn decompress_decimal(input: &[u8], out: &mut Vec<u8>) -> usize {
         out.push(b'-');
     }
 
+    let mut size = 0;
+
     let (bits_count_of_fist_byte, decimal_places, input) = if input[0] & DECIMAL_FLAG != 0 {
+        size += 1;
         (
             BITS_COUNT_OF_FIRST_BYTE_WITH_DECIMAL,
             input[0] & 0b_0000_1111,
@@ -68,7 +71,7 @@ pub fn decompress_decimal(input: &[u8], out: &mut Vec<u8>) -> usize {
         out.extend_from_slice(&buf[index + 1..]);
     }
 
-    len
+    size + len
 }
 
 #[cfg(test)]

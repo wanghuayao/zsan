@@ -25,11 +25,12 @@ pub fn compress_space(count: usize, out: &mut Vec<u8>) {
 }
 
 #[inline]
-pub fn decompress_space(input: u8, out: &mut Vec<u8>) {
+pub fn decompress_space(input: u8, out: &mut Vec<u8>) -> usize {
     // MSB is 11, it's a space count byte
     // there is a space
     let space_count = input & SPACE_OUNT_MASK;
     out.resize(space_count as usize + out.len(), b' ');
+    space_count as usize
 }
 
 #[cfg(test)]
