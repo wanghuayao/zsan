@@ -2,5 +2,13 @@
 name = "zsan"
 version = "0.1.0"
 edition = "2024"
+library = true
 
 [dependencies]
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "append_benchmark"
+harness = false
