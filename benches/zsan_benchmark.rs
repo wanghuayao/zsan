@@ -3,12 +3,13 @@ use zsan::{compress, decompress};
 
 fn bench_compress(c: &mut Criterion) {
     let test_cases = [
-        ("short_number", "12345"),
-        ("negative_decimal", "-67.89"),
-        ("mixed_content", "abc 123 def 45.67   ghi"),
         (
-            "long_text",
-            "This is a longer text with multiple numbers 123.45 and spaces   to test compression performance",
+            "case-1",
+            "6224      ABC20200902       1312       1145       7802       5411          17800          90532                                           1109.2049 ",
+        ),
+        (
+            "case-2",
+            "9951      EFG0990     132230     132280     102230     192230          4         46     5938.6 561969.6111",
         ),
     ];
 
@@ -24,12 +25,13 @@ fn bench_compress(c: &mut Criterion) {
 
 fn bench_decompress(c: &mut Criterion) {
     let test_cases = [
-        ("short_number", "12345"),
-        ("negative_decimal", "-67.89"),
-        ("mixed_content", "abc 123 def 45.67   ghi"),
         (
-            "long_text",
-            "This is a longer text with multiple numbers 123.45 and spaces   to test compression performance",
+            "case-1",
+            "6224      ABC20200902       1312       1145       7802       5411          17800          90532                                           1109.2049 ",
+        ),
+        (
+            "case-2",
+            "9951      EFG0990     132230     132280     102230     192230          4         46     5938.6 561969.6111",
         ),
     ];
 

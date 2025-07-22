@@ -10,9 +10,5 @@ library = true
 criterion = "0.5"
 
 [[bench]]
-name = "append_benchmark"
-harness = false
-
-[[bench]]
 name = "zsan_benchmark"
 harness = false

@@ -57,9 +57,11 @@ pub fn retrave_blocks(src: &[u8]) -> (bool, bool, Vec<Block>) {
         } else {
             while integer_end < n && s[integer_end].is_ascii_digit() {
                 let d = (s[integer_end] - b'0') as u64;
-                match base.checked_mul(10).and_then(|v| v.checked_add(d)) {
-                    Some(v) if v <= MAX => base = v,
-                    _ => break, // 溢出
+                let v = (base * 10) + d;
+                if v <= MAX {
+                    base = v;
+                } else {
+                    break;
                 }
                 integer_end += 1;
             }
@@ -81,13 +83,14 @@ pub fn retrave_blocks(src: &[u8]) -> (bool, bool, Vec<Block>) {
 
             while frac_idx < max_index && s[frac_idx].is_ascii_digit() {
                 let d = (s[frac_idx] - b'0') as u64;
-                match tmp.checked_mul(10).and_then(|v| v.checked_add(d)) {
-                    Some(v) if v <= MAX => {
-                        tmp = v;
-                        frac_idx += 1;
-                        dec_pl += 1;
-                    }
-                    _ => break, // 溢出
+                let v = (tmp * 10) + d;
+
+                if v <= MAX {
+                    tmp = v;
+                    frac_idx += 1;
+                    dec_pl += 1;
+                } else {
+                    break;
                 }
             }
             base = tmp;
@@ -154,7 +157,7 @@ mod tests {
 
     #[test]
     fn split_decimal() {
-        let (has_negative, has_decimal, out) = retrave_blocks("99.999999999999999988".as_bytes());
+        let (has_negative, has_decimal, out) = retrave_blocks("99999.999999999999999988".as_bytes());
         assert_eq!(has_negative, false);
         assert_eq!(has_decimal, true);
         assert_eq!(
@@ -162,18 +165,18 @@ mod tests {
             vec![
                 Block::Numerical(
                     0,
-                    18,
+                    19,
                     NumericalBlock {
-                        base: 99_999_999_999_999_999,
+                        base: 999_999_999_999_999_999,
                         negative: false,
-                        decimal_places: 15
+                        decimal_places: 13
                     }
                 ),
                 Block::Numerical(
-                    18,
-                    3,
+                    19,
+                    5,
                     NumericalBlock {
-                        base: 988,
+                        base: 99988,
                         negative: false,
                         decimal_places: 0
                     }
