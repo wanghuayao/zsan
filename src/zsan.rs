@@ -187,4 +187,17 @@ mod tests {
         super::decompress(&out, &mut final_out);
         assert_eq!(String::from_utf8(final_out).unwrap(), input);
     }
+
+    #[test]
+    fn test_one_space() {
+        let input = "123 ";
+        let mut out = Vec::new();
+        super::compress(input, &mut out);
+        for o in out.iter() {
+            println!("{:08b}", o);
+        }
+        let mut final_out = vec![];
+        super::decompress(&out, &mut final_out);
+        assert_eq!(String::from_utf8(final_out).unwrap(), input);
+    }
 }

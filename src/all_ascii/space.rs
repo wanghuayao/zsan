@@ -7,6 +7,7 @@ const SPACE_OUNT_MASK: u8 = 0b_0011_1111; // 63
 pub fn compress_space(count: usize, out: &mut Vec<u8>) {
     if count == 1 {
         out.push(b' ');
+        return;
     }
     let current_out_len = out.len();
 

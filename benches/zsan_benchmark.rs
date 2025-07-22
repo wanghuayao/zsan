@@ -6,7 +6,10 @@ fn bench_compress(c: &mut Criterion) {
         ("short_number", "12345"),
         ("negative_decimal", "-67.89"),
         ("mixed_content", "abc 123 def 45.67   ghi"),
-        ("long_text", "This is a longer text with multiple numbers 123.45 and spaces   to test compression performance")
+        (
+            "long_text",
+            "This is a longer text with multiple numbers 123.45 and spaces   to test compression performance",
+        ),
     ];
 
     for (name, input) in test_cases.iter() {
@@ -24,7 +27,10 @@ fn bench_decompress(c: &mut Criterion) {
         ("short_number", "12345"),
         ("negative_decimal", "-67.89"),
         ("mixed_content", "abc 123 def 45.67   ghi"),
-        ("long_text", "This is a longer text with multiple numbers 123.45 and spaces   to test compression performance")
+        (
+            "long_text",
+            "This is a longer text with multiple numbers 123.45 and spaces   to test compression performance",
+        ),
     ];
 
     for (name, input) in test_cases.iter() {
