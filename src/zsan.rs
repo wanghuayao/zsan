@@ -1,16 +1,21 @@
 use crate::zsan_parser::{Block, NumericalBlock, retrave_blocks};
 
+const ZSAN_FLAG_MASK: u8 = 0b_0100_0000;
+
 /// 00:方式1:所有的Numerical都是正整数
 const FIRST_BYTE_UNSIGNED_INTEGER: u8 = 0b_0000_0000;
 /// 01:方式2:如果所有的Numerical都是整数但是包含负数
-const FIRST_BYTE_INTEGER: u8 = 0b_0000_0001;
+const FIRST_BYTE_INTEGER: u8 = 0b_0000_0010;
+
 /// 10:方式3:如果所有的Numerical都是正数但是包含小数
-const FIRST_BYTE_UNSIGNED_DECIMAL: u8 = 0b_0000_0010;
+const FIRST_BYTE_UNSIGNED_DECIMAL: u8 = 0b_0000_0001;
 /// 11:方式4:所有的Numerical包含负数和小数
 const FIRST_BYTE_DECIMAL: u8 = 0b_0000_0011;
 
-const NEGATIVE_FLAG: u8 = 0b_0000_0001;
-const DECIMAL_FLAG: u8 = 0b_0000_0010;
+const ENCODE_MODE_MASK: u8 = 0b_0000_0011;
+
+const NEGATIVE_FLAG: u8 = 0b_0000_0010;
+const DECIMAL_FLAG: u8 = 0b_0000_0001;
 
 pub fn compress(src: &str, out: &mut Vec<u8>) {
     if src.is_empty() {
@@ -35,7 +40,7 @@ pub fn compress(src: &str, out: &mut Vec<u8>) {
         _ => panic!("invalid first byte"),
     };
 
-    out.push(first_byte);
+    out.push(first_byte | ZSAN_FLAG_MASK);
     let mut processed_len = 0;
     blocks.into_iter().for_each(|block| {
         match block {
@@ -79,7 +84,7 @@ pub fn decompress(input: &[u8], out: &mut Vec<u8>) {
         return;
     }
     let first_byte = input[0];
-    let numerical_decompressor = match first_byte {
+    let numerical_decompressor = match first_byte & ENCODE_MODE_MASK {
         FIRST_BYTE_UNSIGNED_INTEGER => {
             crate::all_ascii::unsigned_integer::decompress_unsigned_integer
         }
