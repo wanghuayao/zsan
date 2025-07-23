@@ -1,5 +1,3 @@
-const BITS_COUNT_OF_FIRST_BYTE: u8 = 6;
-
 /// 最高两位是11, 代表这个位置是无符号整数，剩余的6个bit和后续字节表示整数值，整数值采用变长编码,
 /// 例如: 64个空格会用0b_1011_1111和0b_1000_0001两个字节表示。
 /// return true if the integer is compressed, false otherwise.
@@ -13,7 +11,7 @@ pub fn compress_unsigned_integer(
         return false;
     }
 
-    let mut encoded = crate::vle_variants::encode(val, BITS_COUNT_OF_FIRST_BYTE);
+    let mut encoded = crate::vle_variants::encode_6(val);
     encoded[0] |= super::NUMERICAL_HOLDER_FLAG;
     out.extend_from_slice(encoded.as_slice());
 
@@ -22,7 +20,7 @@ pub fn compress_unsigned_integer(
 
 #[inline]
 pub fn decompress_unsigned_integer(input: &[u8], out: &mut Vec<u8>) -> usize {
-    let (mut value, len) = crate::vle_variants::decode(input, BITS_COUNT_OF_FIRST_BYTE);
+    let (mut value, len) = crate::vle_variants::decode_6(input);
 
     const MAX_LEN: usize = 20;
     let mut buf = [0u8; MAX_LEN];

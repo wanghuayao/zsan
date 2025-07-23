@@ -157,7 +157,8 @@ mod tests {
 
     #[test]
     fn split_decimal() {
-        let (has_negative, has_decimal, out) = retrave_blocks("99999.999999999999999988".as_bytes());
+        let (has_negative, has_decimal, out) =
+            retrave_blocks("99999.999999999999999988".as_bytes());
         assert_eq!(has_negative, false);
         assert_eq!(has_decimal, true);
         assert_eq!(

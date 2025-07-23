@@ -1,6 +1,3 @@
-const BITS_COUNT_OF_FIRST_BYTE: u8 = 4;
-const BITS_COUNT_OF_FIRST_BYTE_WITH_DECIMAL: u8 = 1;
-
 const DECIMAL_FLAG: u8 = 0b_0010_0000;
 
 /// 最高两位是11, 代表这个位置是无符号整数，剩余的6个bit和后续字节表示整数值，整数值采用变长编码,
@@ -16,17 +13,17 @@ pub fn compress_unsigned_decimal(
         return false;
     }
 
-    let (first_byte_msb, bits_count_of_fist_byte) = if decimal_places > 0 {
-        (
-            super::NUMERICAL_HOLDER_FLAG | DECIMAL_FLAG | (decimal_places << 1),
-            BITS_COUNT_OF_FIRST_BYTE_WITH_DECIMAL,
-        )
-    } else {
-        (super::NUMERICAL_HOLDER_FLAG, BITS_COUNT_OF_FIRST_BYTE)
-    };
-    let mut encoded: Vec<u8> = crate::vle_variants::encode(val, bits_count_of_fist_byte);
+    let encoded = if decimal_places > 0 {
+        let mut encoded: Vec<u8> = crate::vle_variants::encode_1(val);
 
-    encoded[0] |= first_byte_msb;
+        encoded[0] |= super::NUMERICAL_HOLDER_FLAG | DECIMAL_FLAG | (decimal_places << 1);
+        encoded
+    } else {
+        let mut encoded: Vec<u8> = crate::vle_variants::encode_4(val);
+
+        encoded[0] |= super::NUMERICAL_HOLDER_FLAG;
+        encoded
+    };
 
     out.extend_from_slice(encoded.as_slice());
 
@@ -35,16 +32,13 @@ pub fn compress_unsigned_decimal(
 
 #[inline]
 pub fn decompress_unsigned_decimal(input: &[u8], out: &mut Vec<u8>) -> usize {
-    let (bits_count_of_fist_byte, decimal_places) = if input[0] & DECIMAL_FLAG != 0 {
-        (
-            BITS_COUNT_OF_FIRST_BYTE_WITH_DECIMAL,
-            (input[0] >> 1) & 0b_0000_1111,
-        )
+    let (mut value, decimal_places, len) = if input[0] & DECIMAL_FLAG != 0 {
+        let (value, len) = crate::vle_variants::decode_1(input);
+        (value, (input[0] >> 1) & 0b_0000_1111, len)
     } else {
-        (BITS_COUNT_OF_FIRST_BYTE, 0)
+        let (value, len) = crate::vle_variants::decode_4(input);
+        (value, 0, len)
     };
-
-    let (mut value, len) = crate::vle_variants::decode(input, bits_count_of_fist_byte);
 
     const MAX_LEN: usize = 20;
     let mut buf = [b'0'; MAX_LEN];

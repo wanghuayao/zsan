@@ -1,5 +1,3 @@
-const BITS_COUNT_OF_FIRST_BYTE: u8 = 5;
-
 const NEGATIVE_FLAG: u8 = 0b_0010_0000;
 
 /// 最高两位是11, 代表这个位置是无符号整数，剩余的6个bit和后续字节表示整数值，整数值采用变长编码,
@@ -10,7 +8,7 @@ pub fn compress_integer(val: u64, negative: bool, _decimal_places: u8, out: &mut
         return false;
     }
 
-    let mut encoded = crate::vle_variants::encode(val, BITS_COUNT_OF_FIRST_BYTE);
+    let mut encoded = crate::vle_variants::encode_5(val);
     encoded[0] |= super::NUMERICAL_HOLDER_FLAG | if negative { NEGATIVE_FLAG } else { 0 };
     out.extend_from_slice(encoded.as_slice());
 
@@ -23,7 +21,7 @@ pub fn decompress_integer(input: &[u8], out: &mut Vec<u8>) -> usize {
         out.push(b'-');
     }
 
-    let (mut value, len) = crate::vle_variants::decode(input, BITS_COUNT_OF_FIRST_BYTE);
+    let (mut value, len) = crate::vle_variants::decode_5(input);
 
     const MAX_LEN: usize = 20;
     let mut buf = [0u8; MAX_LEN];

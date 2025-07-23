@@ -1,6 +1,3 @@
-const BITS_COUNT_OF_FIRST_BYTE: u8 = 4;
-const BITS_COUNT_OF_FIRST_BYTE_WITH_DECIMAL: u8 = 0;
-
 const NEGATIVE_FLAG: u8 = 0b_0010_0000;
 const DECIMAL_FLAG: u8 = 0b_0001_0000;
 
@@ -15,11 +12,12 @@ pub fn compress_decimal(val: u64, negative: bool, decimal_places: u8, out: &mut 
     let first_byte_msb = super::NUMERICAL_HOLDER_FLAG
         | if negative { NEGATIVE_FLAG } else { 0 }
         | if decimal_places > 0 { DECIMAL_FLAG } else { 0 };
+
     let encoded = if decimal_places > 0 {
         out.push(first_byte_msb | decimal_places);
-        crate::vle_variants::encode(val, BITS_COUNT_OF_FIRST_BYTE_WITH_DECIMAL)
+        crate::vle_variants::encode_0(val)
     } else {
-        let mut encoded = crate::vle_variants::encode(val, BITS_COUNT_OF_FIRST_BYTE);
+        let mut encoded = crate::vle_variants::encode_4(val);
         encoded[0] |= super::NUMERICAL_HOLDER_FLAG
             | if negative { NEGATIVE_FLAG } else { 0 }
             | if decimal_places > 0 { DECIMAL_FLAG } else { 0 };
@@ -39,18 +37,27 @@ pub fn decompress_decimal(input: &[u8], out: &mut Vec<u8>) -> usize {
 
     let mut size = 0;
 
-    let (bits_count_of_fist_byte, decimal_places, input) = if input[0] & DECIMAL_FLAG != 0 {
-        size += 1;
-        (
-            BITS_COUNT_OF_FIRST_BYTE_WITH_DECIMAL,
-            input[0] & 0b_0000_1111,
-            &input[1..],
-        )
-    } else {
-        (BITS_COUNT_OF_FIRST_BYTE, 0, input)
-    };
+    // let (decode_fn, decimal_places, input) = if input[0] & DECIMAL_FLAG != 0 {
+    //     size += 1;
+    //     (
+    //         crate::vle_variants::decode_0,
+    //         input[0] & 0b_0000_1111,
+    //         &input[1..],
+    //     )
+    // } else {
+    //     (crate::vle_variants::decode_4, 0_u8, input)
+    // };
 
-    let (mut value, len) = crate::vle_variants::decode(input, bits_count_of_fist_byte);
+    // let (mut value, len) = decode_fn(input);
+
+    let (mut value, decimal_places, len) = if input[0] & DECIMAL_FLAG != 0 {
+        size += 1;
+        let (value, len) = crate::vle_variants::decode_0(&input[1..]);
+        (value, input[0] & 0b_0000_1111, len)
+    } else {
+        let (value, len) = crate::vle_variants::decode_4(input);
+        (value, 0_u8, len)
+    };
 
     const MAX_LEN: usize = 20;
     let mut buf = [b'0'; MAX_LEN];
