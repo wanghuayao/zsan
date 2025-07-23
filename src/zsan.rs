@@ -21,10 +21,9 @@ pub fn compress(src: &str, out: &mut Vec<u8>) {
     if src.is_empty() {
         return;
     }
-
     let src = src.as_bytes();
-
     let (has_negative, has_decimal, blocks) = retrave_blocks(src);
+
     let first_byte =
         if has_negative { NEGATIVE_FLAG } else { 0 } | if has_decimal { DECIMAL_FLAG } else { 0 };
 
@@ -196,6 +195,21 @@ mod tests {
         for o in out.iter() {
             println!("{:08b}", o);
         }
+        let mut final_out = vec![];
+        super::decompress(&out, &mut final_out);
+        assert_eq!(String::from_utf8(final_out).unwrap(), input);
+    }
+
+    #[test]
+    fn test_mixed_types() {
+        let input = "30";
+        let mut out = Vec::new();
+        super::compress(input, &mut out);
+
+        for o in out.iter() {
+            println!("{:08b}", o);
+        }
+
         let mut final_out = vec![];
         super::decompress(&out, &mut final_out);
         assert_eq!(String::from_utf8(final_out).unwrap(), input);

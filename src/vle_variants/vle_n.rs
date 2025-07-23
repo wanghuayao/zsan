@@ -12,8 +12,12 @@
 //       let mut out = Vec::new();
 //       let val = (input & ${ concat(VALIDATE_MASK_, $n_name) } as u64) as u8;
 //       value = value >> ${ concat(VALIDATE_BITS_, $n_name) };
-//       out.push(val | if value != 0 { ${ concat(CONTINUOUS_FLAG_, $n_name) } } else { 0 });
-//       vle_encode_loop!(value, out);
+//       if value > 0 {
+//          out.push(val | ${ concat(CONTINUOUS_FLAG_, $n_name) });
+//          vle_encode_loop!(value, out);
+//       } else {
+//          out.push(val);
+//       }
 //       out
 //     }
 
@@ -47,8 +51,12 @@ pub fn encode_4(input: u64) -> Vec<u8> {
     let mut out = Vec::with_capacity(16);
     let val = (input & VALIDATE_MASK_4 as u64) as u8;
     value = value >> VALIDATE_BITS_4;
-    out.push(val | if value != 0 { CONTINUOUS_FLAG_4 } else { 0 });
-    vle_encode_loop!(value, out);
+    if value > 0 {
+        out.push(val | CONTINUOUS_FLAG_4);
+        vle_encode_loop!(value, out);
+    } else {
+        out.push(val);
+    }
     out
 }
 
@@ -76,8 +84,12 @@ pub fn encode_5(input: u64) -> Vec<u8> {
     let mut out = Vec::with_capacity(16);
     let val = (input & VALIDATE_MASK_5 as u64) as u8;
     value = value >> VALIDATE_BITS_5;
-    out.push(val | if value != 0 { CONTINUOUS_FLAG_5 } else { 0 });
-    vle_encode_loop!(value, out);
+    if value > 0 {
+        out.push(val | CONTINUOUS_FLAG_5);
+        vle_encode_loop!(value, out);
+    } else {
+        out.push(val);
+    }
     out
 }
 
@@ -105,8 +117,13 @@ pub fn encode_6(input: u64) -> Vec<u8> {
     let mut out = Vec::with_capacity(16);
     let val = (input & VALIDATE_MASK_6 as u64) as u8;
     value = value >> VALIDATE_BITS_6;
-    out.push(val | if value != 0 { CONTINUOUS_FLAG_6 } else { 0 });
-    vle_encode_loop!(value, out);
+    if value > 0 {
+        out.push(val | CONTINUOUS_FLAG_6);
+        vle_encode_loop!(value, out);
+    } else {
+        out.push(val);
+    }
+
     out
 }
 
